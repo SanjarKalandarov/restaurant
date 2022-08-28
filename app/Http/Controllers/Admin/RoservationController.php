@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\TableStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RosevationRequest;
 use App\Models\Roservation;
 use App\Models\Table;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class RoservationController extends Controller
@@ -70,7 +72,8 @@ class RoservationController extends Controller
     public function edit($id)
     {
         $roservation=Roservation::find($id);
-        $tables=Table::all();
+//dd($roservation);
+        $tables=Table::where('status',TableStatus::Avalaiable)->get();
         return  view('admin.roservation.edit',compact('roservation','tables'));
     }
 
@@ -83,9 +86,23 @@ class RoservationController extends Controller
      */
     public function update(RosevationRequest $request, $id)
     {
+//        dd($request);
+
+        $table=Table::findOrFail($request->table_id);
+        if($request->guest_number>$table->guest_number){
+            return  back()->with('warning','Plase  choose the table bas on guest');
+        }
         $roser=Roservation::find($id);
 
-        $roser->update($request->all());
+    $request_date=Carbon::parse($request->res_date);
+    $reservations=$table->reservations()->where('id','!=',$roser->id)->get();
+    foreach ($reservations as $res){
+        if($res->res_date->format('Y-m-d')==$request_date->format('Y-m-d')){
+            return  back()->with('warning','this table is reserved for this date');
+        }
+    }
+
+        $roser->update($request->validated());
         return  to_route('admin.roservation.index')->with('success','Reservation tahrirlndi');
 
     }

@@ -15,7 +15,7 @@ class Table extends Model
         'status'=>TableStatus::class,
         'location'=>TableLocation::class
     ];
-    public  function  tables(){
+    public  function  reservations(){
         return $this->hasMany(Roservation::class,'table_id','id');
     }
 }
